@@ -68,7 +68,10 @@ interface ApiError {
   message: string;
 }
 
-// Update the API call handler with proper types
+// Add API URL from environment variables
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+
 const apiCall = async (endpoint: string, method: string, body?: unknown, token?: string) => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -78,14 +81,8 @@ const apiCall = async (endpoint: string, method: string, body?: unknown, token?:
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  console.log(`API Call to ${endpoint}:`, {
-    method,
-    headers,
-    body,
-  });
-
   try {
-    const response = await fetch(`http://localhost:8000/api/${endpoint}`, {
+    const response = await fetch(`${API_URL}/api/${endpoint}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
