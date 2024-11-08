@@ -53,8 +53,10 @@ app.add_middleware(
 questions_db = []
 solved_questions_db = []
 
-# Google Client ID (replace with your actual client ID)
-GOOGLE_CLIENT_ID = "916530969641-bq2q0kquh4q040i2rqfs4plfmcq9i9ni.apps.googleusercontent.com"
+# Get Google Client ID from environment variables
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+if not GOOGLE_CLIENT_ID:
+    raise ValueError("GOOGLE_CLIENT_ID environment variable is not set")
 
 class TokenRequest(BaseModel):
     token: str

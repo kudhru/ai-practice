@@ -594,7 +594,7 @@ export default function OcamlQuizEnhanced() {
 
   return (
     <GoogleOAuthProvider 
-      clientId="916530969641-bq2q0kquh4q040i2rqfs4plfmcq9i9ni.apps.googleusercontent.com"
+      clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}
       onScriptLoadError={() => console.error('Google script failed to load:')}
     >
       <div className="container mx-auto p-4 min-h-screen flex flex-col">
