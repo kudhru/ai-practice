@@ -41,11 +41,15 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days in minutes
 
 # Define allowed origins
 ALLOWED_ORIGINS = [
+    "http://localhost",
     "http://localhost:3000",
-    "http://llm-bots.bits-pilani.ac.in:3000",
     "http://localhost:3001",
+    "http://llm-bots.bits-pilani.ac.in:3000",
     "http://llm-bots.bits-pilani.ac.in:3001",
     "http://llm-bots.bits-pilani.ac.in",
+    "172.20.17.71",
+    "172.20.17.71:3000",
+    "172.20.17.71:3001",
     # Add more origins as needed
 ]
 
