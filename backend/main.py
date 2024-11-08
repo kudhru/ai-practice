@@ -39,11 +39,21 @@ JWT_ALGORITHM = "HS256"
 SESSION_DURATION = timedelta(days=7)
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days in minutes
 
+# Define allowed origins
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://llm-bots.bits-pilani.ac.in:3000",
+    "http://localhost:3001",
+    "http://llm-bots.bits-pilani.ac.in:3001",
+    "http://llm-bots.bits-pilani.ac.in",
+    # Add more origins as needed
+]
+
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://llm-bots.bits-pilani.ac.in:3000", "*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
