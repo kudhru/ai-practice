@@ -62,8 +62,14 @@ interface TestCaseResult extends TestCase {
   actualOutput: string;
 }
 
-// API call handler
-const apiCall = async (endpoint: string, method: string, body?: any, token?: string) => {
+// Add proper error types
+interface ApiError {
+  status?: number;
+  message: string;
+}
+
+// Update the API call handler with proper types
+const apiCall = async (endpoint: string, method: string, body?: unknown, token?: string) => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   }
@@ -87,28 +93,25 @@ const apiCall = async (endpoint: string, method: string, body?: any, token?: str
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error(`API Error:`, errorData);
       if (response.status === 401) {
         auth.removeToken();
-        throw new Error('Session expired. Please login again.');
+        throw { status: 401, message: 'Session expired. Please login again.' } as ApiError;
       }
-      throw new Error(`API call failed: ${response.statusText}. ${JSON.stringify(errorData)}`)
+      throw { status: response.status, message: errorData.detail || 'API call failed' } as ApiError;
     }
 
     return response.json()
   } catch (error) {
     console.error(`API call to ${endpoint} failed:`, error)
-    throw error
+    throw error as ApiError;
   }
 }
 
 function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
   const [error, setError] = useState<string | null>(null)
 
-  const handleGoogleSuccess = async (response: any) => {
+  const handleGoogleSuccess = async (response: { credential?: string }) => {
     try {
-      console.log('Google login response:', response);
-      
       if (!response?.credential) {
         setError('No credentials received from Google');
         return;
@@ -116,10 +119,10 @@ function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
 
       // Pass the credential (ID token) to your backend
       onLogin(response.credential);
-      
     } catch (error) {
-      console.error('Login error:', error);
-      setError('Login failed. Please try again.');
+      const apiError = error as ApiError;
+      console.error('Login error:', apiError);
+      setError(apiError.message || 'Login failed. Please try again.');
     }
   };
 
@@ -514,16 +517,17 @@ export default function OcamlQuizEnhanced() {
     setError(null);
     
     try {
-        const response = await apiCall('run_tests', 'POST', {
-            code: code,
-            question: question
-        }, token);
-        
-        setTestResults(response.results);
-    } catch (err) {
-        setError('Failed to run test cases. Please try again.');
+      const response = await apiCall('run_tests', 'POST', {
+        code: code,
+        question: question
+      }, token);
+      
+      setTestResults(response.results);
+    } catch (error) {
+      const apiError = error as ApiError;
+      setError(apiError.message || 'Failed to run test cases. Please try again.');
     } finally {
-        setIsRunningTests(false);
+      setIsRunningTests(false);
     }
   }
 
@@ -535,30 +539,33 @@ export default function OcamlQuizEnhanced() {
 
     try {
       const response = await apiCall('run_tests', 'POST', {
-          code: code,
-          question: question
+        code: code,
+        question: question
       }, token);
       
       setTestResults(response.results);
-    } catch (err) {
-      setError('Failed to run test cases. Please try again.');
+    } catch (error) {
+      const apiError = error as ApiError;
+      setError(apiError.message || 'Failed to run test cases. Please try again.');
+      return;
     }
 
     try {
-        const result = await apiCall('submit', 'POST', {
-            code: code,
-            question: question,
-            test_results: testResults
-        }, token);
-        
-        setFeedback(result);
-        
-        const updatedSolvedQuestions = await apiCall('solved_questions', 'GET', null, token);
-        setSolvedQuestions(updatedSolvedQuestions);
-    } catch (err) {
-        setError('Failed to submit answer. Please try again.');
+      const result = await apiCall('submit', 'POST', {
+        code: code,
+        question: question,
+        test_results: testResults
+      }, token);
+      
+      setFeedback(result);
+      
+      const updatedSolvedQuestions = await apiCall('solved_questions', 'GET', null, token);
+      setSolvedQuestions(updatedSolvedQuestions);
+    } catch (error) {
+      const apiError = error as ApiError;
+      setError(apiError.message || 'Failed to submit answer. Please try again.');
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   }
 
@@ -579,18 +586,9 @@ export default function OcamlQuizEnhanced() {
 
   useEffect(() => {
     if (token && !question) {
-      handleGenerateQuestion()
+      handleGenerateQuestion();
     }
-  }, [token, questionSettings])
-
-  const handleApiError = (error: any) => {
-    if (error.status === 401) {
-      auth.removeToken();
-      setToken(null);
-      setError('Session expired. Please login again.');
-    }
-    throw error;
-  }
+  }, [token, question, handleGenerateQuestion]);
 
   return (
     <GoogleOAuthProvider 
@@ -677,7 +675,7 @@ export default function OcamlQuizEnhanced() {
                             <DialogHeader>
                               <DialogTitle>Hint</DialogTitle>
                               <DialogDescription>
-                                Here's a high-level approach to solve the problem:
+                                Here&apos;s a high-level approach to solve the problem:
                               </DialogDescription>
                             </DialogHeader>
                             <pre className="bg-muted p-4 rounded-md whitespace-pre-wrap">
