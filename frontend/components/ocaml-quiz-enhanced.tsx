@@ -602,7 +602,7 @@ export default function OcamlQuizEnhanced() {
           <div className="flex items-center justify-center flex-grow">
             <Card className="w-96">
               <CardHeader>
-                <CardTitle>Log In to OCaml Quiz</CardTitle>
+                <CardTitle>Log In to OCaml Practice Tool</CardTitle>
               </CardHeader>
               <CardContent>
                 <LoginForm onLogin={handleLogin} />
@@ -631,7 +631,7 @@ export default function OcamlQuizEnhanced() {
                   >
                     <Menu className="h-4 w-4" />
                   </Button>
-                  <h1 className="text-2xl font-bold">OCaml Quiz</h1>
+                  <h1 className="text-2xl font-bold">GenAI-Based OCaml Practice Tool</h1>
                 </div>
                 <div className="flex items-center gap-2">
                   <Dialog>
