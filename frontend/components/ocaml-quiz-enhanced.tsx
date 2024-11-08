@@ -388,6 +388,7 @@ export default function OcamlQuizEnhanced() {
   const [generationProgress, setGenerationProgress] = useState(0)
   const [solvedQuestions, setSolvedQuestions] = useState<SolvedQuestion[]>([])
   const [isSidebarVisible, setIsSidebarVisible] = useState(true)
+  const [initialQuestionLoaded, setInitialQuestionLoaded] = useState(false)
 
   useEffect(() => {
     const validateExistingSession = async () => {
@@ -582,10 +583,11 @@ export default function OcamlQuizEnhanced() {
   }
 
   useEffect(() => {
-    if (token && !question) {
+    if (token && !question && !initialQuestionLoaded) {
       handleGenerateQuestion();
+      setInitialQuestionLoaded(true);
     }
-  }, [token, question]);
+  }, [token, question, initialQuestionLoaded]);
 
   return (
     <GoogleOAuthProvider 
