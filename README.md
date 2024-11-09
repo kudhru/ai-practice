@@ -43,7 +43,7 @@ source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # Setup PostgreSQL database (run as postgres user)
-sudo -u postgres bash scripts/setup_db.sh my_user my_password
+sudo -u postgres bash database/scripts/setup_db.sh my_user my_password
 
 # Create .env file
 cp .env.example .env

@@ -1,14 +1,14 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <db_user> <db_password>"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <db_user> <db_password> <db_name>"
     exit 1
 fi
 
 # Get values from command line
 DB_USER=$1
 DB_PASSWORD=$2
-DB_NAME="ocaml_coding_practice"
+DB_NAME=$3
 
 # Create database and user
 psql postgres <<EOF
