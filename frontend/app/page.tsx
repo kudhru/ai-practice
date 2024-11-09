@@ -1,5 +1,5 @@
-import OcamlQuizEnhanced from "@/components/ocaml-quiz-enhanced"
+import QuizEnhanced from "@/components/quiz-enhanced"
 
 export default function Page() {
-  return <OcamlQuizEnhanced />
+  return <QuizEnhanced />
 }
