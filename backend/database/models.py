@@ -25,6 +25,7 @@ class DBQuestion(Base):
     difficulty = Column(String, nullable=False)
     topics = Column(ARRAY(String), nullable=False)
     test_cases = Column(JSON, nullable=False)  # Store test cases as JSON
+    programming_language = Column(String, nullable=False)  # Add this line
     created_at = Column(DateTime, default=datetime.utcnow)
     
     solved_by = relationship("DBUserSolvedQuestion", back_populates="question")

@@ -19,11 +19,12 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi.responses import JSONResponse 
-from prompts import QUESTION_GENERATION_PROMPT_TEMPLATE, FEEDBACK_PROMPT_TEMPLATE
+from prompts import QUESTION_GENERATION_PROMPT_TEMPLATES, FEEDBACK_PROMPT_TEMPLATES
 
 from database.models import DBUser, DBQuestion, DBUserSolvedQuestion
 from database.config import get_db, init_db
 from sqlalchemy.orm import Session
+from enum import Enum
 
 # Load environment variables from .env file
 load_dotenv()
@@ -226,7 +227,7 @@ async def generate_question(
         output_parser = PydanticOutputParser(pydantic_object=Question)
 
         prompt = ChatPromptTemplate.from_messages([
-            ("user", QUESTION_GENERATION_PROMPT_TEMPLATE)
+            ("user", QUESTION_GENERATION_PROMPT_TEMPLATES[params.programming_language])
         ])
 
         chain = prompt | llm | output_parser
@@ -263,7 +264,8 @@ async def generate_question(
             hint=question.hint,
             difficulty=params.difficulty,
             topics=params.topics,
-            test_cases=[tc.dict() for tc in question.testCases]
+            test_cases=[tc.dict() for tc in question.testCases],
+            programming_language=params.programming_language
         )
         db.add(db_question)
         db.commit()
@@ -304,6 +306,61 @@ async def generate_question(
         print(f"Error generating question: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+class ProgrammingLanguage(str, Enum):
+    OCAML = "ocaml"
+    JAVA = "java"
+    C = "c"
+
+def execute_code(language: ProgrammingLanguage, code: str, input_args: str) -> subprocess.CompletedProcess:
+    try:
+        if language == ProgrammingLanguage.OCAML:
+            with open('main.ml', 'w') as f:
+                f.write(code)
+            return subprocess.run(
+                input_args,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+        elif language == ProgrammingLanguage.JAVA:
+            with open('Main.java', 'w') as f:
+                f.write(code)
+            # Compile Java code
+            subprocess.run(['javac', 'Main.java'], check=True, capture_output=True)
+            # Run Java code
+            return subprocess.run(
+                ['java', 'Main'] + input_args.split()[1:],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+        elif language == ProgrammingLanguage.C:
+            with open('main.c', 'w') as f:
+                f.write(code)
+            # Compile C code
+            subprocess.run(['gcc', 'main.c', '-o', 'program'], check=True, capture_output=True)
+            # Run compiled program
+            return subprocess.run(
+                ['./program'] + input_args.split()[1:],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+    finally:
+        # Cleanup files
+        cleanup_files(language)
+
+def cleanup_files(language: ProgrammingLanguage):
+    if language == ProgrammingLanguage.OCAML:
+        if os.path.exists('main.ml'): os.remove('main.ml')
+    elif language == ProgrammingLanguage.JAVA:
+        for file in ['Main.java', 'Main.class']:
+            if os.path.exists(file): os.remove(file)
+    elif language == ProgrammingLanguage.C:
+        for file in ['main.c', 'program']:
+            if os.path.exists(file): os.remove(file)
+
 @app.post("/api/run_tests", response_model=RunTestsResponse)
 async def run_tests(
     request: RunTestsRequest,
@@ -311,16 +368,11 @@ async def run_tests(
 ):
     results = []
     for test_case in request.question.testCases:
-        with open('main.ml', 'w') as f:
-            f.write(request.code)
-        
         try:
-            process = subprocess.run(
-                test_case.input,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=5
+            process = execute_code(
+                ProgrammingLanguage(request.programming_language),
+                request.code,
+                test_case.input
             )
             
             actual_output = process.stdout.strip()
@@ -360,7 +412,7 @@ def generate_feedback(request: SubmitRequest, is_correct: bool):
 
     # Create prompt template for code feedback
     prompt = ChatPromptTemplate.from_messages([
-        ("user", FEEDBACK_PROMPT_TEMPLATE)
+        ("user", FEEDBACK_PROMPT_TEMPLATES[request.programming_language])
     ])
 
     # Create chain and generate feedback

@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, CheckCircle, XCircle, HelpCircle, Settings, Menu } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
@@ -22,6 +21,15 @@ import dynamic from 'next/dynamic'
 import { auth } from '@/utils/auth'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { DropdownSelector } from "@/components/ui/dropdown-selector"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { LoadingOverlay } from "@/components/ui/loading-overlay"
 
 // Dynamically import Monaco Editor to avoid SSR issues
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
@@ -36,6 +44,7 @@ interface Question {
   text: string
   testCases: TestCase[]
   hint: string
+  programming_language: string
 }
 
 interface Feedback {
@@ -48,6 +57,7 @@ interface Feedback {
 interface QuestionParams {
   difficulty: string
   topics: string[]
+  programming_language: string
 }
 
 interface SolvedQuestion {
@@ -71,6 +81,11 @@ interface ApiError {
 // Add API URL from environment variables
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+const LANGUAGE_OPTIONS = [
+  { value: 'ocaml', label: 'OCaml' },
+  { value: 'java', label: 'Java' },
+  { value: 'c', label: 'C' }
+];
 
 const apiCall = async (endpoint: string, method: string, body?: unknown, token?: string) => {
   const headers: HeadersInit = {
@@ -145,35 +160,48 @@ function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
   )
 }
 
-function QuestionSettingsForm({ initialSettings, onSave }: { initialSettings: QuestionParams; onSave: (params: QuestionParams) => void }) {
-  const [difficulty, setDifficulty] = useState(initialSettings.difficulty)
-  const [topics, setTopics] = useState(initialSettings.topics)
-  const [isSaved, setIsSaved] = useState(false)
+// Add this helper function before QuestionSettingsForm
+const getTopicsForLanguage = (language: string) => {
+  switch (language) {
+    case 'java':
+      return ['Classes', 'Objects', 'Inheritance', 'Polymorphism'];
+    case 'c':
+      return ['Pointers', 'Structs', 'Memory Management', 'Arrays'];
+    case 'ocaml':
+    default:
+      return ['Functions', 'Recursive Functions', 'Pattern Matching', 'Map'];
+  }
+};
 
-  const allTopics = [
-    'Let and In expressions',
-    'Let definitions',
-    'Functions',
-    'Recursive Functions',
-    'Variants',
-    'Records',
-    'Tuples',
-    'Pattern Matching',
-    'Map',
-    'Fold'
-  ]
+function QuestionSettingsForm({ initialSettings, onSave }: { initialSettings: QuestionParams; onSave: (params: QuestionParams) => void }) {
+  const [difficulty, setDifficulty] = useState(initialSettings.difficulty);
+  const [topics, setTopics] = useState(initialSettings.topics);
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Add useEffect to update form when initialSettings change
+  useEffect(() => {
+    setDifficulty(initialSettings.difficulty);
+    setTopics(initialSettings.topics);
+  }, [initialSettings]);
 
   const handleTopicChange = (topic: string) => {
     setTopics(prev => 
       prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic]
-    )
-  }
+    );
+  };
 
   const handleSave = () => {
-    onSave({ difficulty, topics })
-    setIsSaved(true)
-    setTimeout(() => setIsSaved(false), 2000)
-  }
+    onSave({ 
+      difficulty, 
+      topics, 
+      programming_language: initialSettings.programming_language 
+    });
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  // Get topics based on current programming language
+  const allTopics = getTopicsForLanguage(initialSettings.programming_language);
 
   return (
     <div className="space-y-4">
@@ -210,7 +238,7 @@ function QuestionSettingsForm({ initialSettings, onSave }: { initialSettings: Qu
         {isSaved && <CheckCircle className="text-green-500 h-5 w-5" />}
       </div>
     </div>
-  )
+  );
 }
 
 function QuestionPanel({ question }: { question: Question }) {
@@ -282,7 +310,7 @@ function TestCasePanel({ testCases, testResults }: {
   )
 }
 
-function CodeEditor({ code, onChange }: { code: string; onChange: (value: string) => void }) {
+function CodeEditor({ code, onChange, language }: { code: string; onChange: (value: string) => void; language: string }) {
   return (
     <Card className="h-[calc(100vh-16rem)]">
       <CardHeader className="py-2">
@@ -291,7 +319,7 @@ function CodeEditor({ code, onChange }: { code: string; onChange: (value: string
       <CardContent className="p-0 h-[calc(100%-3rem)]">
         <MonacoEditor
           height="100%"
-          language="ocaml"
+          language={language}
           theme="vs-dark"
           value={code}
           onChange={(value) => onChange(value || '')}
@@ -382,13 +410,15 @@ export default function QuizEnhanced() {
   const [testResults, setTestResults] = useState<TestCaseResult[]>([]);
   const [questionSettings, setQuestionSettings] = useState<QuestionParams>({
     difficulty: 'Easy',
-    topics: ['Functions', 'Recursive Functions']
+    topics: ['Functions', 'Recursive Functions'],
+    programming_language: 'ocaml'
   })
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [solvedQuestions, setSolvedQuestions] = useState<SolvedQuestion[]>([])
   const [isSidebarVisible, setIsSidebarVisible] = useState(true)
   const [initialQuestionLoaded, setInitialQuestionLoaded] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState('ocaml');
 
   useEffect(() => {
     const validateExistingSession = async () => {
@@ -472,7 +502,7 @@ export default function QuizEnhanced() {
     setFeedback(null);
   }
 
-  const handleGenerateQuestion = async () => {
+  const handleGenerateQuestion = async (settings?: QuestionParams) => {
     if (!token) return;
 
     setIsGeneratingQuestion(true);
@@ -480,17 +510,16 @@ export default function QuizEnhanced() {
     setGenerationProgress(0);
     
     try {
+      // First fetch solved questions
       console.log('Updating the solved questions');
       const updatedSolvedQuestions = await apiCall('solved_questions', 'GET', null, token);
       console.log('Updated solved questions:', updatedSolvedQuestions);
-      
       setSolvedQuestions(updatedSolvedQuestions);
-      console.log('Generating question with settings:', questionSettings);
-      
+
       const question = await apiCall(
         'generate_question', 
         'POST', 
-        questionSettings,
+        settings || questionSettings,  // Use passed settings if available
         token
       );
       
@@ -517,7 +546,8 @@ export default function QuizEnhanced() {
     try {
       const response = await apiCall('run_tests', 'POST', {
         code: code,
-        question: question
+        question: question,
+        programming_language: selectedLanguage
       }, token);
       
       setTestResults(response.results);
@@ -538,7 +568,8 @@ export default function QuizEnhanced() {
     try {
       const response = await apiCall('run_tests', 'POST', {
         code: code,
-        question: question
+        question: question,
+        programming_language: selectedLanguage,
       }, token);
       
       setTestResults(response.results);
@@ -552,7 +583,8 @@ export default function QuizEnhanced() {
       const result = await apiCall('submit', 'POST', {
         code: code,
         question: question,
-        test_results: testResults
+        test_results: testResults,
+        programming_language: selectedLanguage
       }, token);
       
       setFeedback(result);
@@ -568,14 +600,15 @@ export default function QuizEnhanced() {
   }
 
   const handleSaveSettings = (newSettings: QuestionParams) => {
-    setQuestionSettings(newSettings)
+    setQuestionSettings(newSettings);
   }
 
   const handleSelectSolvedQuestion = (solvedQuestion: SolvedQuestion) => {
-    setQuestion(solvedQuestion.question)
-    setCode(solvedQuestion.userCode)
-    setFeedback(solvedQuestion.feedback)
-    setTestResults(solvedQuestion.testResults)
+    setQuestion(solvedQuestion.question);
+    setCode(solvedQuestion.userCode);
+    setFeedback(solvedQuestion.feedback);
+    setTestResults(solvedQuestion.testResults);
+    setSelectedLanguage(solvedQuestion.question.programming_language);
   }
 
   const toggleSidebar = () => {
@@ -588,6 +621,22 @@ export default function QuizEnhanced() {
       setInitialQuestionLoaded(true);
     }
   }, [token, question, initialQuestionLoaded]);
+
+  const handleLanguageChange = (newLanguage: string) => {
+    // Create new settings
+    const newSettings = {
+      ...questionSettings,
+      programming_language: newLanguage,
+      topics: getTopicsForLanguage(newLanguage)
+    };
+    
+    // Update states
+    setSelectedLanguage(newLanguage);
+    setQuestionSettings(newSettings);
+    
+    // Pass the new settings directly to handleGenerateQuestion
+    handleGenerateQuestion(newSettings);
+  };
 
   return (
     <GoogleOAuthProvider 
@@ -631,6 +680,13 @@ export default function QuizEnhanced() {
                   <h1 className="text-2xl font-bold">GenAI-Based Practice Tool For Programming</h1>
                 </div>
                 <div className="flex items-center gap-2">
+                  <DropdownSelector
+                    value={selectedLanguage}
+                    onValueChange={handleLanguageChange}
+                    options={LANGUAGE_OPTIONS}
+                    placeholder="Select language"
+                    className="w-[180px]"
+                  />
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="icon">
@@ -660,7 +716,7 @@ export default function QuizEnhanced() {
                     <TestCasePanel testCases={question.testCases} testResults={testResults} />
                   </div>
                   <div className="w-full lg:w-1/2 flex flex-col">
-                    <CodeEditor code={code} onChange={setCode} />
+                    <CodeEditor code={code} onChange={setCode} language={selectedLanguage} />
                     <div className="mt-4 space-y-2">
                       <div className="flex justify-between">
                         <Dialog>
@@ -705,7 +761,7 @@ export default function QuizEnhanced() {
                       </div>
                       <Button 
                         variant="outline" 
-                        onClick={handleGenerateQuestion} 
+                        onClick={(e) => handleGenerateQuestion()} 
                         className="w-full"
                         disabled={isGeneratingQuestion}
                       >
@@ -727,6 +783,10 @@ export default function QuizEnhanced() {
           </div>
         )}
       </div>
+      <LoadingOverlay 
+        isLoading={isGeneratingQuestion || isSubmitting}
+        message={isGeneratingQuestion ? "Generating question..." : "Submitting solution..."}
+      />
     </GoogleOAuthProvider>
   )
 }

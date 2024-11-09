@@ -24,6 +24,7 @@ class Feedback(BaseModel):
 class QuestionParams(BaseModel):
     difficulty: str
     topics: List[str]
+    programming_language: str
 
 class SolvedQuestion(BaseModel):
     question: Question
@@ -38,11 +39,13 @@ class SessionInfo(BaseModel):
 class RunTestsRequest(BaseModel):
     code: str
     question: Question
+    programming_language: str
 
 class SubmitRequest(BaseModel):
     code: str
     question: Question
     test_results: List[TestCaseResult]
+    programming_language: str
 
 class RunTestsResponse(BaseModel):
     results: List[TestCaseResult]
