@@ -761,7 +761,7 @@ export default function QuizEnhanced() {
                       </div>
                       <Button 
                         variant="outline" 
-                        onClick={(e) => handleGenerateQuestion()} 
+                        onClick={() => handleGenerateQuestion()} 
                         className="w-full"
                         disabled={isGeneratingQuestion}
                       >

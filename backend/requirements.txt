@@ -9,3 +9,4 @@ langchain-openai==0.2.5
 python-jose==3.3.0
 SQLAlchemy==2.0.35
 psycopg2-binary==2.9.10
+alembic==1.14.0
