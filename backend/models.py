@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 from datetime import datetime
 
 class TestCase(BaseModel):
@@ -49,3 +49,10 @@ class SubmitRequest(BaseModel):
 
 class RunTestsResponse(BaseModel):
     results: List[TestCaseResult]
+
+class LanguageSettings(BaseModel):
+    difficulty: str
+    topics: List[str]
+
+class UserSettings(BaseModel):
+    settings: Dict[str, LanguageSettings]

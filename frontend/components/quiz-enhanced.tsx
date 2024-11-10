@@ -599,9 +599,31 @@ export default function QuizEnhanced() {
     }
   }
 
-  const handleSaveSettings = (newSettings: QuestionParams) => {
-    setQuestionSettings(newSettings);
-  }
+  const handleSaveSettings = async (settings: QuestionParams) => {
+    if (!token) {
+      console.error('No authentication token available');
+      setError('Please sign in to save settings');
+      return;
+    }
+
+    try {
+      const languageSettings = {
+        difficulty: settings.difficulty,
+        topics: settings.topics
+      };
+      
+      await apiCall(
+        `user/settings/${settings.programming_language}`, 
+        'PUT', 
+        languageSettings,
+        token
+      );
+      setQuestionSettings(settings);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      setError('Failed to save settings. Please try again.');
+    }
+  };
 
   const handleSelectSolvedQuestion = (solvedQuestion: SolvedQuestion) => {
     setQuestion(solvedQuestion.question);
@@ -622,20 +644,31 @@ export default function QuizEnhanced() {
     }
   }, [token, question, initialQuestionLoaded]);
 
-  const handleLanguageChange = (newLanguage: string) => {
-    // Create new settings
-    const newSettings = {
-      ...questionSettings,
-      programming_language: newLanguage,
-      topics: getTopicsForLanguage(newLanguage)
-    };
-    
-    // Update states
+  const handleLanguageChange = async (newLanguage: string) => {
     setSelectedLanguage(newLanguage);
-    setQuestionSettings(newSettings);
-    
-    // Pass the new settings directly to handleGenerateQuestion
-    handleGenerateQuestion(newSettings);
+    try {
+      const settings = await apiCall(`user/settings/${newLanguage}`, 'GET', null, token!);
+      setQuestionSettings({
+        ...settings,
+        programming_language: newLanguage
+      });
+
+      // Clear current question and feedback
+      setQuestion(null);
+      setFeedback(null);
+      setTestResults([]);
+      setCode('');
+
+      // Generate new question with the updated language
+      await handleGenerateQuestion({
+        ...settings,
+        programming_language: newLanguage
+      });
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Failed to handle language change:', apiError);
+      setError(apiError.message || 'Failed to change language. Please try again.');
+    }
   };
 
   return (

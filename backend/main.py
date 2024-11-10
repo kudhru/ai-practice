@@ -11,7 +11,18 @@ import random
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from google.auth import exceptions as google_auth_exceptions
-from models import TestCase, Question, Feedback, QuestionParams, SolvedQuestion, RunTestsRequest, SubmitRequest, TestCaseResult, RunTestsResponse
+from models import (
+    TestCase, 
+    Question, 
+    Feedback, 
+    QuestionParams, 
+    SolvedQuestion, 
+    RunTestsRequest, 
+    SubmitRequest, 
+    TestCaseResult, 
+    RunTestsResponse,
+    LanguageSettings
+)
 
 import os
 import subprocess
@@ -546,6 +557,54 @@ async def log_requests(request: Request, call_next):
     except Exception as e:
         print(f"Request Error: {str(e)}")
         raise
+
+@app.get("/api/user/settings/{language}")
+async def get_user_settings(
+    language: str,
+    token_payload: dict = Depends(get_token_from_header),
+    db: Session = Depends(get_db)
+):
+    user = db.query(DBUser).filter(DBUser.google_id == token_payload["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    language_defaults = {
+        "ocaml": {
+            "difficulty": "Easy",
+            "topics": ["Functions", "Recursive Functions"]
+        },
+        "java": {
+            "difficulty": "Easy", 
+            "topics": ["Inheritance", "Polymorphism"]
+        },
+        "c": {
+            "difficulty": "Easy",
+            "topics": ["Arrays", "Structs"]
+        }
+    }
+
+    settings = user.question_settings.get(language, language_defaults.get(language))
+    
+    return LanguageSettings(**settings)
+
+@app.put("/api/user/settings/{language}")
+async def update_user_settings(
+    language: str,
+    settings: LanguageSettings,
+    token_payload: dict = Depends(get_token_from_header),
+    db: Session = Depends(get_db)
+):
+    user = db.query(DBUser).filter(DBUser.google_id == token_payload["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not user.question_settings:
+        user.question_settings = {}
+    
+    user.question_settings[language] = settings.dict()
+    db.commit()
+    
+    return {"status": "success"}
 
 # if __name__ == "__main__":
 #     import uvicorn

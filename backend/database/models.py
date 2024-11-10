@@ -12,6 +12,7 @@ class DBUser(Base):
     email = Column(String, unique=True, nullable=False)
     name = Column(String)
     picture = Column(String)
+    question_settings = Column(JSON, default={})  # Store settings for each language
     created_at = Column(DateTime, default=datetime.utcnow)
     solved_questions = relationship("DBUserSolvedQuestion", back_populates="user")
 
