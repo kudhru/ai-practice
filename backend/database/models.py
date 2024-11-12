@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, JSON, DateTime, ARRAY
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
+from sqlalchemy.ext.mutable import MutableDict
 
 Base = declarative_base()
 
@@ -12,7 +13,7 @@ class DBUser(Base):
     email = Column(String, unique=True, nullable=False)
     name = Column(String)
     picture = Column(String)
-    question_settings = Column(JSON, default={})  # Store settings for each language
+    question_settings = Column(MutableDict.as_mutable(JSON), default={})  # Store settings for each language
     created_at = Column(DateTime, default=datetime.utcnow)
     solved_questions = relationship("DBUserSolvedQuestion", back_populates="user")
 
@@ -40,7 +41,7 @@ class DBUserSolvedQuestion(Base):
     user_code = Column(String, nullable=False)
     test_results = Column(JSON, nullable=False)  # Store test results as JSON
     is_correct = Column(Boolean, nullable=False)
-    feedback = Column(JSON, nullable=False)  # Store feedback as JSON
+    feedback = Column(JSON, nullable=False)  # Store AI feedback as JSON
     solved_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("DBUser", back_populates="solved_questions")
