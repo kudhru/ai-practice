@@ -583,7 +583,12 @@ async def get_user_settings(
         }
     }
 
-    settings = user.question_settings.get(language, language_defaults.get(language))
+    # Use default settings if user has no settings, otherwise use user's settings for the language
+    # (falling back to defaults if the language isn't in user settings)
+    if user.question_settings is None:
+        settings = language_defaults.get(language)
+    else:
+        settings = user.question_settings.get(language, language_defaults.get(language))
     
     return LanguageSettings(**settings)
 
