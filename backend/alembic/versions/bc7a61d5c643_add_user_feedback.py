@@ -19,8 +19,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Add user_feedback column with JSON type
-    op.add_column('user', sa.Column('user_feedback', sa.JSON(), nullable=True))
+    op.add_column('users', sa.Column('user_feedback', sa.JSON(), nullable=True))
 
 def downgrade() -> None:
     # Remove user_feedback column if we need to rollback
-    op.drop_column('user', 'user_feedback')
+    op.drop_column('users', 'user_feedback')
