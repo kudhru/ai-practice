@@ -575,7 +575,7 @@ async def get_user_settings(
         },
         "java": {
             "difficulty": "Easy", 
-            "topics": ["Arrays", "Strings", "Inheritance"]
+            "topics": ["Lists", "Maps", "Sets"]
         },
         "c": {
             "difficulty": "Easy",

@@ -170,7 +170,7 @@ const getTopicsForLanguage = (language: string) => {
     case 'ocaml':
       return ['Functions', 'Recursive Functions', 'Pattern Matching', 'Lists', 'Arrays', 'Strings', 'Sorting', 'Map', 'Fold'];
     default:
-      
+      return [];
   }
 };
 
@@ -411,7 +411,7 @@ export default function QuizEnhanced() {
   const [testResults, setTestResults] = useState<TestCaseResult[]>([]);
   const [questionSettings, setQuestionSettings] = useState<QuestionParams>({
     difficulty: 'Easy',
-    topics: ['Arrays', 'Strings', 'Inheritance'],
+    topics: ['Lists', 'Maps', 'Sets'],
     programming_language: 'java'
   })
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false)
