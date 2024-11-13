@@ -170,7 +170,7 @@ const getTopicsForLanguage = (language: string) => {
     case 'ocaml':
       return ['Functions', 'Recursive Functions', 'Pattern Matching', 'Lists', 'Arrays', 'Strings', 'Sorting', 'Map', 'Fold'];
     default:
-      return [];
+      
   }
 };
 
@@ -411,15 +411,15 @@ export default function QuizEnhanced() {
   const [testResults, setTestResults] = useState<TestCaseResult[]>([]);
   const [questionSettings, setQuestionSettings] = useState<QuestionParams>({
     difficulty: 'Easy',
-    topics: ['Functions', 'Recursive Functions'],
-    programming_language: 'ocaml'
+    topics: ['Arrays', 'Strings', 'Inheritance'],
+    programming_language: 'java'
   })
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [solvedQuestions, setSolvedQuestions] = useState<SolvedQuestion[]>([])
   const [isSidebarVisible, setIsSidebarVisible] = useState(true)
   const [initialQuestionLoaded, setInitialQuestionLoaded] = useState(false)
-  const [selectedLanguage, setSelectedLanguage] = useState('ocaml');
+  const [selectedLanguage, setSelectedLanguage] = useState('java');
 
   useEffect(() => {
     const validateExistingSession = async () => {
