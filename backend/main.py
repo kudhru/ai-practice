@@ -341,7 +341,7 @@ def execute_code(language: ProgrammingLanguage, code: str, input_args: str) -> s
             subprocess.run(['javac', 'Main.java'], check=True, capture_output=True)
             # Run Java code
             return subprocess.run(
-                ['java', 'Main'] + input_args.split()[1:],
+                ['java', 'Main'] + input_args.split()[2:],
                 capture_output=True,
                 text=True,
                 timeout=5
