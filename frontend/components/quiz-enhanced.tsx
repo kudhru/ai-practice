@@ -164,12 +164,13 @@ function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
 const getTopicsForLanguage = (language: string) => {
   switch (language) {
     case 'java':
-      return ['Classes', 'Objects', 'Inheritance', 'Polymorphism'];
+      return ['Arrays', 'Strings', 'Inheritance', 'Polymorphism', 'Lists', 'Maps', 'Sets', 'Generics', 'Thread Pools'];
     case 'c':
-      return ['Pointers', 'Structs', 'Memory Management', 'Arrays'];
+      return ['Arrays', 'Strings', 'Dynamic Memory Allocation', 'Lists', 'Sorting'];
     case 'ocaml':
+      return ['Functions', 'Recursive Functions', 'Pattern Matching', 'Lists', 'Arrays', 'Strings', 'Sorting', 'Map', 'Fold'];
     default:
-      return ['Functions', 'Recursive Functions', 'Pattern Matching', 'Map'];
+      return [];
   }
 };
 

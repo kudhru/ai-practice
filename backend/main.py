@@ -571,15 +571,15 @@ async def get_user_settings(
     language_defaults = {
         "ocaml": {
             "difficulty": "Easy",
-            "topics": ["Functions", "Recursive Functions"]
+            "topics": ["Recursive Functions", "Lists"]
         },
         "java": {
             "difficulty": "Easy", 
-            "topics": ["Inheritance", "Polymorphism"]
+            "topics": ["Arrays", "Strings", "Inheritance"]
         },
         "c": {
             "difficulty": "Easy",
-            "topics": ["Arrays", "Structs"]
+            "topics": ["Arrays", "Strings", "Dynamic Memory Allocation"]
         }
     }
 
