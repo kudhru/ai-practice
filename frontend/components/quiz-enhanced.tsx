@@ -799,7 +799,7 @@ export default function QuizEnhanced() {
                         className="w-full"
                         disabled={isGeneratingQuestion}
                       >
-                        {isGeneratingQuestion ? 'Generating Question...' : 'Generate New Question'}
+                        {isGeneratingQuestion ? 'Generating Question using GenAI...' : 'Generate New Question'}
                       </Button>
                       {isGeneratingQuestion && (
                         <Progress value={generationProgress} className="w-full" />
@@ -819,7 +819,7 @@ export default function QuizEnhanced() {
       </div>
       <LoadingOverlay 
         isLoading={isGeneratingQuestion || isSubmitting}
-        message={isGeneratingQuestion ? "Generating question..." : "Submitting solution..."}
+        message={isGeneratingQuestion ? "Generating Question using GenAI..." : "Submitting solution and generating feedback using GenAI..."}
       />
     </GoogleOAuthProvider>
   )
