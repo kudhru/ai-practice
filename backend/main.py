@@ -323,54 +323,59 @@ class ProgrammingLanguage(str, Enum):
     C = "c"
 
 def execute_code(language: ProgrammingLanguage, code: str, input_args: str) -> subprocess.CompletedProcess:
+    unique_id = str(uuid.uuid4())
+    dir_path = f'temp_{unique_id}'
+    os.makedirs(dir_path)
     try:
         if language == ProgrammingLanguage.OCAML:
-            with open('main.ml', 'w') as f:
+            filename = os.path.join(dir_path, 'main.ml')
+            with open(filename, 'w') as f:
                 f.write(code)
             return subprocess.run(
-                input_args,
+                ['ocaml', filename] + input_args.split()[2:],
                 shell=True,
                 capture_output=True,
                 text=True,
                 timeout=5
             )
         elif language == ProgrammingLanguage.JAVA:
-            with open('Main.java', 'w') as f:
+            filename = os.path.join(dir_path, 'Main.java')
+            with open(filename, 'w') as f:
                 f.write(code)
             # Compile Java code
-            subprocess.run(['javac', 'Main.java'], check=True, capture_output=True)
+            subprocess.run(['javac', filename], check=True, capture_output=True)
             # Run Java code
             return subprocess.run(
-                ['java', 'Main'] + input_args.split()[2:],
+                ['java', '-cp', dir_path, 'Main'] + input_args.split()[2:],
                 capture_output=True,
                 text=True,
                 timeout=5
             )
         elif language == ProgrammingLanguage.C:
-            with open('main.c', 'w') as f:
+            filename = os.path.join(dir_path, 'main.c')
+            executable = os.path.join(dir_path, 'program')
+            with open(filename, 'w') as f:
                 f.write(code)
             # Compile C code
-            subprocess.run(['gcc', 'main.c', '-o', 'program'], check=True, capture_output=True)
+            subprocess.run(['gcc', filename, '-o', executable], check=True, capture_output=True)
             # Run compiled program
             return subprocess.run(
-                ['./program'] + input_args.split()[1:],
+                [executable] + input_args.split()[1:],
                 capture_output=True,
                 text=True,
                 timeout=5
             )
     finally:
-        # Cleanup files
-        cleanup_files(language)
+        # Cleanup directory and all files
+        cleanup_files(dir_path)
 
-def cleanup_files(language: ProgrammingLanguage):
-    if language == ProgrammingLanguage.OCAML:
-        if os.path.exists('main.ml'): os.remove('main.ml')
-    elif language == ProgrammingLanguage.JAVA:
-        for file in ['Main.java', 'Main.class']:
-            if os.path.exists(file): os.remove(file)
-    elif language == ProgrammingLanguage.C:
-        for file in ['main.c', 'program']:
-            if os.path.exists(file): os.remove(file)
+def cleanup_files(dir_path: str):
+    try:
+        # Remove directory and all its contents
+        import shutil
+        shutil.rmtree(dir_path)
+    except OSError as e:
+        print(f"Error cleaning up directory {dir_path}: {e}")
 
 @app.post("/api/run_tests", response_model=RunTestsResponse)
 async def run_tests(
@@ -410,9 +415,6 @@ async def run_tests(
                 expectedOutput=test_case.expectedOutput,
                 actualOutput=f"Error: {str(e)}"
             ))
-        finally:
-            if os.path.exists('main.ml'):
-                os.remove('main.ml')
                 
     return RunTestsResponse(results=results)
 
