@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
 
 class TestCase(BaseModel):
@@ -10,6 +10,7 @@ class TestCaseResult(TestCase):
     actualOutput: str
 
 class Question(BaseModel):
+    id: Optional[int] = None
     name: str
     text: str
     testCases: List[TestCase]

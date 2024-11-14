@@ -40,6 +40,7 @@ interface TestCase {
 }
 
 interface Question {
+  id?: number
   name: string
   text: string
   testCases: TestCase[]

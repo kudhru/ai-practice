@@ -311,6 +311,8 @@ async def generate_question(
         db.add(solved_question)
         db.commit()
         
+        # Update question with database ID before returning
+        question.id = db_question.id
         return question
         
     except Exception as e:
@@ -449,17 +451,12 @@ async def submit(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Get question from database
-    question = db.query(DBQuestion).filter(DBQuestion.name == request.question.name).first()
-    if not question:
-        raise HTTPException(status_code=404, detail="Question not found")
-
     # Find the existing solved question record
     solved_question = (
         db.query(DBUserSolvedQuestion)
         .filter(
             DBUserSolvedQuestion.user_id == user.id,
-            DBUserSolvedQuestion.question_id == question.id
+            DBUserSolvedQuestion.question_id == request.question.id
         )
         .first()
     )
@@ -507,6 +504,7 @@ async def get_solved_questions(
     return [
         SolvedQuestion(
             question=Question(
+                id=sq.question.id,
                 name=sq.question.name,
                 text=sq.question.text,
                 testCases=[TestCase(**tc) for tc in sq.question.test_cases],
