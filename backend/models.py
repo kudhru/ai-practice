@@ -15,6 +15,7 @@ class Question(BaseModel):
     text: str
     testCases: List[TestCase]
     hint: str
+    programming_language: str
 
 class Feedback(BaseModel):
     isCorrect: bool

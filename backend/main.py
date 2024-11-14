@@ -311,8 +311,9 @@ async def generate_question(
         db.add(solved_question)
         db.commit()
         
-        # Update question with database ID before returning
+        # Update question with database ID and programming language before returning
         question.id = db_question.id
+        question.programming_language = params.programming_language
         return question
         
     except Exception as e:
@@ -508,7 +509,8 @@ async def get_solved_questions(
                 name=sq.question.name,
                 text=sq.question.text,
                 testCases=[TestCase(**tc) for tc in sq.question.test_cases],
-                hint=sq.question.hint
+                hint=sq.question.hint,
+                programming_language=sq.question.programming_language
             ),
             userCode=sq.user_code,
             feedback=Feedback(**sq.feedback),
