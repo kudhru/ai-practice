@@ -333,10 +333,9 @@ def execute_code(language: ProgrammingLanguage, code: str, input_args: str) -> s
                 f.write(code)
             return subprocess.run(
                 ['ocaml', filename] + input_args.split()[2:],
-                shell=True,
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=10
             )
         elif language == ProgrammingLanguage.JAVA:
             filename = os.path.join(dir_path, 'Main.java')
@@ -349,7 +348,7 @@ def execute_code(language: ProgrammingLanguage, code: str, input_args: str) -> s
                 ['java', '-cp', dir_path, 'Main'] + input_args.split()[2:],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=10
             )
         elif language == ProgrammingLanguage.C:
             filename = os.path.join(dir_path, 'main.c')
@@ -363,7 +362,7 @@ def execute_code(language: ProgrammingLanguage, code: str, input_args: str) -> s
                 [executable] + input_args.split()[1:],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=10
             )
     finally:
         # Cleanup directory and all files
