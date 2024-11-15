@@ -102,7 +102,8 @@ const JAVA_TOPICS = [
   'Sets',
   'Maps',
   'Exceptions handling',
-  'Comparable & comparator',
+  'Comparable',
+  'Comparator',
   'Enumerations',
   'Multithreading',
 ];
