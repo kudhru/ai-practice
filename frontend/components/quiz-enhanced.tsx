@@ -88,6 +88,59 @@ const LANGUAGE_OPTIONS = [
   { value: 'c', label: 'C' }
 ];
 
+// Define topics for each language
+const JAVA_TOPICS = [
+  'Arrays',
+  'Strings',
+  'Interfaces and polymorphism',
+  'Inheritance',
+  'Nested classes',
+  'Lambda expressions',
+  'Generics',
+  'Lists',
+  'Sets',
+  'Maps',
+  'Exceptions handling',
+  'Comparable & comparator',
+  'Enumerations',
+  'Multithreading',
+];
+
+
+const C_TOPICS = [
+  'Arrays',
+  'Strings',
+  'Dynamic Memory Allocation',
+  'Lists',
+  'Sorting',
+];
+
+const OCAML_TOPICS = [
+  'Functions',
+  'Recursive Functions',
+  'Pattern Matching',
+  'Lists',
+  'Arrays',
+  'Strings',
+  'Sorting',
+  'Map',
+  'Fold',
+];
+
+// Updated helper function using the topic lists
+const getTopicsForLanguage = (language: string) => {
+  switch (language) {
+    case 'java':
+      return JAVA_TOPICS;
+    case 'c':
+      return C_TOPICS;
+    case 'ocaml':
+      return OCAML_TOPICS;
+    default:
+      return [];
+  }
+};
+
 const apiCall = async (endpoint: string, method: string, body?: unknown, token?: string) => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -160,20 +213,6 @@ function LoginForm({ onLogin }: { onLogin: (token: string) => void }) {
     </div>
   )
 }
-
-// Add this helper function before QuestionSettingsForm
-const getTopicsForLanguage = (language: string) => {
-  switch (language) {
-    case 'java':
-      return ['Arrays', 'Strings', 'Inheritance', 'Polymorphism', 'Lists', 'Maps', 'Sets', 'Generics', 'Thread Pools'];
-    case 'c':
-      return ['Arrays', 'Strings', 'Dynamic Memory Allocation', 'Lists', 'Sorting'];
-    case 'ocaml':
-      return ['Functions', 'Recursive Functions', 'Pattern Matching', 'Lists', 'Arrays', 'Strings', 'Sorting', 'Map', 'Fold'];
-    default:
-      return [];
-  }
-};
 
 function QuestionSettingsForm({ initialSettings, onSave }: { initialSettings: QuestionParams; onSave: (params: QuestionParams) => void }) {
   const [difficulty, setDifficulty] = useState(initialSettings.difficulty);
