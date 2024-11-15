@@ -27,34 +27,138 @@ The response should contain a well-structured question with the following compon
 
 {format_instructions}"""
 
+APPLICATION_DOMAINS = [
+    "Banking System",
+    "E-commerce System",
+    "School Management System",
+    "Vehicle Rental System", 
+    "Game Development",
+    "File System Management",
+    "Online Learning Platform",
+    "Restaurant Management System",
+    "Healthcare Management System",
+    "Smart Home System",
+    "Inventory Management System", 
+    "Hospital Management System",
+    "University Library System",
+    "Online Food Ordering System",
+    "Pet Management System",
+    "Zoo Management System",
+    "Flight Reservation System",
+    "E-learning Platform with Assessments",
+    "Bookstore Management System",
+    "Shopping Cart System",
+    "Warehouse Management System",
+    "Parking Management System",
+    "Movie Ticket Booking System",
+    "Sports Team Management System",
+    "Real Estate Management System",
+    "Travel Agency System",
+    "Insurance Management System",
+    "Social Media Platform",
+    "Fitness Training Application",
+    "Smart Farming System"
+]
+
 JAVA_QUESTION_GENERATION_PROMPT_TEMPLATE = """
-You are an expert Java programming question generator.
+You are an expert programmer specializing in Object-Oriented Programming (OOP). Your task is to generate a high-quality programming question to help undergraduate students practice for their OOP exams. The generated question should be relevant, engaging, and strictly adhere to the instructions provided.
 
-Generate a Java question with the following specifications:
+### Steps to Generate the Question:
 
-- **Difficulty Level**: `{difficulty}`
-- **Topics to Cover**: `{topics}`
-  
-The question should require the student to write a Java program with a Main class containing a main method. **Explain to the student that their code will be saved in a file named `Main.java` and executed using the commands `javac Main.java` followed by `java Main arg1 arg2 ...`.** The program should handle command-line arguments using the `args` parameter of the main method.
+#### 1. **Application Domain**
+Use the following domain to contextualize the programming problem:
+`{domain}`
 
-**Response Format**
+#### 2. **Create a Programming Question**
+- Base the programming question on the **provided domain**.  
+- Generate a **Java programming question** aligned with the following parameters:  
+  - **Difficulty Level**: `{difficulty}`
+  - **Topics to Cover**: `{topics}`  
+- Ensure the question does **not involve file handling** or reading from external databases. 
+- Explicitly include the following instructions in the problem description:
+  - All required **user inputs should be read via command line arguments**.  
+  - The driver class **must be named `Main`**, as the code will be saved as `Main.java` for testing.  
 
-The response should contain a well-structured question with the following components:
+#### 4. **Test Case Independence** [Don't include this in the question description]
+- The student code will be tested using multiple test cases, and for each test case, the `Main.java` file will be deleted and recreated.  
+- Each test case must be **independent** of others.  
+- Programs must not rely on maintaining state across multiple executions, as each test case will be run in isolation.  
+- **Avoid interdependent test cases** like the following examples:  
 
-1. **Name**: A concise title (4-5 words maximum).
-  
-2. **Text**: A detailed problem description in Markdown format, explaining how to use command-line arguments via the `args` array and output results using `System.out.println()`. Clearly outline the command format for running the code.
+---
 
-3. **Test Cases** (list of TestCase objects): Each with:
-   - **Input** (string): Full command-line input (including the `java Main` command).
-   - **Expected Output** (string): The correct output that the Java program should produce for the given input.
+#### **Examples of Invalid Interdependent Test Cases:**
 
-4. **Hint**: Step-by-step hints for solving the problem (without any code) in Markdown format. Include numbered steps to help guide the student logically toward the solution.
+1. **Bank Account Management:**  
+   - **Input 1:** `"deposit 500"` → **Expected Output:** `Balance after deposit: 500`  
+   - **Input 2:** `"withdraw 200"` → **WRONG - Assumes previous balance:** `Balance after withdrawal: 300`  
 
-**Avoidance List**: Ensure that the question does not overlap with the following list:
+2. **Shopping Cart:**  
+   - **Input 1:** `"add Apple 3"` → **Expected Output:** `Added Apple. Total price: $3`  
+   - **Input 2:** `"add Banana 2"` → **WRONG - Assumes previous cart state:** `Added Banana. Total price: $5`  
+
+3. **Parking Lot Management:**  
+   - **Input 1:** `"park KA01AB1234"` → **Expected Output:** `Car KA01AB1234 parked. Slot 1 assigned.`  
+   - **Input 2:** `"remove KA01AB1234"` → **WRONG - Assumes previous slot state:** `Slot 1 is now available.` 
+
+#### 4. **Provide Output in the Following Format**:
+
+1. **Name**: A short and concise title (4-5 words) that reflects the programming theme.  
+2. **Text**: A detailed problem description in Markdown format. The description must:  
+   - Clearly state the problem requirements and context.  
+   - Include the instruction for naming the driver class as `Main` and for reading inputs from the command line.  
+3. **Hint**: Provide step-by-step logical hints in Markdown format to guide the student toward solving the problem. Avoid writing code in the hints; focus on explaining the thought process.  
+
+#### 5. **Avoidance List**
+Ensure the generated question does **not overlap** with any of the following previously generated questions:  
 {avoid_questions}
 
-{format_instructions}"""
+#### 6. **Formatting Instructions**
+{format_instructions}
+"""
+
+JAVA_TEST_CASE_GENERATION_PROMPT_TEMPLATE = """
+You are an expert programmer specializing in Object-Oriented Programming (OOP). Your task is to generate test cases for a Java programming question mentioned below.
+
+### Question:
+{question}
+
+### Steps to Generate the Test Cases:
+
+#### 1. **Test Case Independence**
+- The student code will be tested using multiple test cases, and for each test case, the `Main.java` file will be deleted and recreated.  
+- Each test case must be **independent** of others.  
+- Programs must not rely on maintaining state across multiple executions, as each test case will be run in isolation.  
+- **Avoid interdependent test cases** like the following examples:  
+
+---
+
+#### **Examples of Invalid Interdependent Test Cases:**
+
+1. **Bank Account Management:**  
+   - **Input 1:** `"deposit 500"` → **Expected Output:** `Balance after deposit: 500`  
+   - **Input 2:** `"withdraw 200"` → **WRONG - Assumes previous balance:** `Balance after withdrawal: 300`  
+
+2. **Shopping Cart:**  
+   - **Input 1:** `"add Apple 3"` → **Expected Output:** `Added Apple. Total price: $3`  
+   - **Input 2:** `"add Banana 2"` → **WRONG - Assumes previous cart state:** `Added Banana. Total price: $5`  
+
+3. **Parking Lot Management:**  
+   - **Input 1:** `"park KA01AB1234"` → **Expected Output:** `Car KA01AB1234 parked. Slot 1 assigned.`  
+   - **Input 2:** `"remove KA01AB1234"` → **WRONG - Assumes previous slot state:** `Slot 1 is now available.`  
+
+--- 
+
+#### 2. **Provide Test Cases in the Following Format**:
+
+1. **Test Cases**: Provide four independent test cases in the following structure:  
+   - **Input**: The command line arguments as a single string (excluding the `java Main` command).  
+   - **Expected Output**: The output for the given input as a single string.
+   - Ensure that each test case is independent of others, and the program's output should only depend on the inputs provided during a single execution.
+
+#### 3. **Formatting Instructions**
+{format_instructions}
+"""
 
 C_QUESTION_GENERATION_PROMPT_TEMPLATE = """
 You are an expert C programming question generator.

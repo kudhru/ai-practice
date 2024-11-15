@@ -9,13 +9,23 @@ class TestCase(BaseModel):
 class TestCaseResult(TestCase):
     actualOutput: str
 
+class QuestionWithoutTestCases(BaseModel):
+    id: Optional[int] = None
+    name: str
+    text: str
+    hint: str
+    programming_language: Optional[str] = None
+
+class TestCases(BaseModel):
+    testCases: List[TestCase]
+
 class Question(BaseModel):
     id: Optional[int] = None
     name: str
     text: str
     testCases: List[TestCase]
     hint: str
-    programming_language: str
+    programming_language: Optional[str] = None
 
 class Feedback(BaseModel):
     isCorrect: bool

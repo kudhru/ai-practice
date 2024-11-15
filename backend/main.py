@@ -12,6 +12,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from google.auth import exceptions as google_auth_exceptions
 from models import (
+    QuestionWithoutTestCases,
     TestCase, 
     Question, 
     Feedback, 
@@ -21,7 +22,8 @@ from models import (
     SubmitRequest, 
     TestCaseResult, 
     RunTestsResponse,
-    LanguageSettings
+    LanguageSettings,
+    TestCases
 )
 
 import os
@@ -30,7 +32,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi.responses import JSONResponse 
-from prompts import QUESTION_GENERATION_PROMPT_TEMPLATES, FEEDBACK_PROMPT_TEMPLATES
+from prompts import JAVA_TEST_CASE_GENERATION_PROMPT_TEMPLATE, QUESTION_GENERATION_PROMPT_TEMPLATES, FEEDBACK_PROMPT_TEMPLATES, APPLICATION_DOMAINS
 
 from database.models import DBUser, DBQuestion, DBUserSolvedQuestion
 from database.config import get_db, init_db
@@ -233,15 +235,6 @@ async def generate_question(
     try:
         print(f"Received params: {params}")
         print(f"Token payload: {token_payload}")
-        
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, store=True, cache=False)
-        output_parser = PydanticOutputParser(pydantic_object=Question)
-
-        prompt = ChatPromptTemplate.from_messages([
-            ("user", QUESTION_GENERATION_PROMPT_TEMPLATES[params.programming_language])
-        ])
-
-        chain = prompt | llm | output_parser
 
         # Get current user
         user = db.query(DBUser).filter(DBUser.google_id == token_payload["sub"]).first()
@@ -256,13 +249,66 @@ async def generate_question(
             .all()
         )
         
-        # Generate new question
-        question = chain.invoke({
-            "difficulty": params.difficulty,
-            "topics": ", ".join(params.topics),
-            "avoid_questions": "\n".join([f"- {q.name}" for q in solved_questions]),
-            "format_instructions": output_parser.get_format_instructions()
-        })
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, store=True, cache=False)
+        
+        if params.programming_language in ["ocaml", "c"]:
+            # Use existing code for OCaml and C
+            output_parser = PydanticOutputParser(pydantic_object=Question)
+
+            prompt = ChatPromptTemplate.from_messages([
+                ("user", QUESTION_GENERATION_PROMPT_TEMPLATES[params.programming_language])
+            ])
+
+            chain = prompt | llm | output_parser
+            
+            # Generate new question
+            question = chain.invoke({
+                "difficulty": params.difficulty,
+                "topics": ", ".join(params.topics),
+                "avoid_questions": "\n".join([f"- {q.name}" for q in solved_questions]),
+                "format_instructions": output_parser.get_format_instructions()
+            })
+        else:
+            # For Java, generate question and test cases separately
+            question_parser = PydanticOutputParser(pydantic_object=QuestionWithoutTestCases)
+            test_cases_parser = PydanticOutputParser(pydantic_object=TestCases)
+
+            # Randomly select a domain
+            selected_domain = random.choice(APPLICATION_DOMAINS)
+
+            # Generate question first
+            question_prompt = ChatPromptTemplate.from_messages([
+                ("user", QUESTION_GENERATION_PROMPT_TEMPLATES["java"])
+            ])
+            question_chain = question_prompt | llm | question_parser
+            
+            question_without_tests = question_chain.invoke({
+                "domain": selected_domain,
+                "difficulty": params.difficulty,
+                "topics": ", ".join(params.topics),
+                "avoid_questions": "\n".join([f"- {q.name}" for q in solved_questions]),
+                "format_instructions": question_parser.get_format_instructions()
+            })
+
+            # Then generate test cases
+            test_cases_prompt = ChatPromptTemplate.from_messages([
+                ("user", JAVA_TEST_CASE_GENERATION_PROMPT_TEMPLATE)
+            ])
+            test_cases_chain = test_cases_prompt | llm | test_cases_parser
+
+            test_cases = test_cases_chain.invoke({
+                "question": question_without_tests.text,
+                "format_instructions": test_cases_parser.get_format_instructions()
+            })
+
+            # Combine into final Question object
+            question = Question(
+                name=question_without_tests.name,
+                text=question_without_tests.text,
+                hint=question_without_tests.hint,
+                programming_language=params.programming_language,
+                testCases=test_cases.testCases
+            )
         
         # Strip whitespace from expected outputs
         for test_case in question.testCases:
