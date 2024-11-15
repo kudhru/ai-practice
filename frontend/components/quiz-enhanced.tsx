@@ -92,7 +92,8 @@ const LANGUAGE_OPTIONS = [
 const JAVA_TOPICS = [
   'Arrays',
   'Strings',
-  'Interfaces and polymorphism',
+  'Polymorphism',
+  'Interfaces',
   'Inheritance',
   'Nested classes',
   'Lambda expressions',
